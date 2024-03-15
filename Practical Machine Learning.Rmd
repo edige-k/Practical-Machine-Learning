@@ -1,0 +1,65 @@
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Loading Data
+training <- read.csv("./pml-training.csv", na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv("./pml-testing.csv", na.strings=c("NA","#DIV/0!",""))
+
+# Data dimensions
+dim(training)
+dim(testing)
+
+#Initial Data Inspection
+head(training)
+head(testing)
+
+#Cross-Validation Setup
+library(caret)
+library(randomForest)
+
+# Data Partition
+set.seed(12345)
+inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
+training.set <- training[inTrain, ]
+testing.set <- training[-inTrain, ]
+
+#Data Preprocessing
+# Removing near zero variance predictors
+nzv <- nearZeroVar(training, saveMetrics=TRUE)
+# Excluding variables with excessive NAs
+naExclusion <- apply(training, 2, function(x) mean(is.na(x))) < 0.5
+
+# Cleaning data
+validVars <- naExclusion & !nzv$nzv
+training.set <- training.set[, validVars]
+testing.set <- testing.set[, validVars]
+
+# Adjusting factor levels
+testing.set <- rbind(training.set[2, -ncol(training.set)], testing.set)
+testing.set <- testing.set[-1,]
+
+
+#Model Training and Evaluation
+#Decision Tree Model
+set.seed(12345)
+treeModel <- train(classe ~ ., data=training.set, method="rpart")
+predictTree <- predict(treeModel, testing.set)
+confusionMatrix(predictTree, testing.set$classe)
+
+#Random Forest Model
+
+set.seed(12345)
+rfModel <- randomForest(classe ~ ., data=training.set, ntree=250)
+predictRF <- predict(rfModel, testing.set)
+confusionMatrix(predictRF, testing.set$classe)
+
+#Predictions on Test Data
+predictions <- predict(rfModel, testing)
+predictions
+
+#Saving Results
+testing$predictedClass <- predictions
+write.table(testing, file="testing_with_predictions.csv", quote=FALSE, row.names=FALSE)
+
