@@ -1,0 +1,20 @@
+---
+title: 'Peer-graded Assignment: R Markdown and Leaflet'
+author: "Kozykhan Yedige"
+date: "24.03.2024"
+output: html_file
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(leaflet)
+```
+
+```{r}
+m_map <- leaflet() %>% addTiles()   
+m_map <- m_map %>% addMarkers(lat= 40.4395932, lng= -79.9893378, popup="Che tam brat")
+m_map  
+```
+
